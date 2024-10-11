@@ -1,369 +1,479 @@
-# :book: 0x05. NodeJS Basics.
+# :book: 0x05. 0x03. Queuing System in JS.
 ## :page_with_curl: Topics Covered.
-This project involves learning NodeJS basics concept covered;
-1. Using NodeJS modules
-2. Reading files
-3. Creating HTTP servers
-4. Using Express JS
-5. Testing with Mocha.
-6. Using Nodemon.
+This project involves how to use Redis and implementing Kue as a queue system. The learning objectives include;
+1. Running a Redis server.
+2. Using a Redis client for basic operations and with Node JS.
+3. Storing hash values in Redis.
+4. Dealing with async operations.
+5. Building a basic Express app interacting with a Redis server.
+6. Building a basic Express app interacting with a Redis server and queue.
 
 # :computer: Tasks.
 <!---->
-## [0. Executing basic javascript with Node JS](0-console.js)
+## [0. Install a redis instance](1-redis_op.js)
 ### :page_with_curl: Task requirements.
-In the file `0-console.js`, create a function named `displayMessage` that prints in `STDOUT` the string argument.
+Download, extract, and compile the latest stable Redis version (higher than 5.0.7 - [https://redis.io/download/](/rltoken/v6VB9ZwmVfppL0OmzbmVWQ "https://redis.io/download/")):
 ```
-    bob@dylan:~$ cat 0-main.js
-    const displayMessage = require('./0-console');
-    
-    displayMessage("Hello NodeJS!");
-    
-    bob@dylan:~$ node 0-main.js
-    Hello NodeJS!
-    bob@dylan:~$
+    $ wget http://download.redis.io/releases/redis-6.0.10.tar.gz
+    $ tar xzf redis-6.0.10.tar.gz
+    $ cd redis-6.0.10
+    $ make
 ```
+
+* Start Redis in the background with `src/redis-server`
+```
+    $ src/redis-server &
+```
+
+* Make sure that the server is working with a ping `src/redis-cli ping`
+```
+    PONG
+```
+
+* Using the Redis client again, set the value `School` for the key `Holberton`
+```
+    127.0.0.1:[Port]> set Holberton School
+    OK
+    127.0.0.1:[Port]> get Holberton
+    "School"
+```
+
+* Kill the server with the process id of the redis-server (hint: use `ps` and `grep`)
+```
+    $ kill [PID_OF_Redis_Server]
+```
+
+Copy the `dump.rdb` from the `redis-5.0.7` directory into the root of the Queuing project.
+
+Requirements:
+
+* Running `get Holberton` in the client, should return `School`
 
 **Repo:**
 
-* GitHub repository: `alx-backend-javascript`
-* Directory: `0x05-Node_JS_basic`
-* File: `0-console.js`
+* GitHub repository: `alx-backend`
+* Directory: `0x03-queuing_system_in_js`
+* File: `README.md, dump.rdb`
 
 ### :wrench: Task setup.
 ```bash
-# Create solution file.
-touch 0-console.js
-chmod +x 0-console.js
+wget http://download.redis.io/releases/redis-6.0.10.tar.gz
+tar xzf redis-6.0.10.tar.gz
+cd redis-6.0.10
+make
 
-# Lint.
-npm run lint 0-console.js --fix
+# Start Redis.
+cd /root/redis-6.0.10
+src/redis-server &
 
-# Test.
-touch tests/0-main.js
-chmod +x tests/0-main.js
-node tests/0-main.js
+# ping redis server.
+src/redis-cli ping
+
+# Enter Redis client.
+redis-cli
+
+# Kill redis server
+redis-cli shutdown # or using process id
+
+ps aux | grep redis-server
+kill <PID>
 ```
 
 ### :heavy_check_mark: Solution
-> [:point_right: 0-console.js](0-console.js)
+> [:point_right: README.md](README.md), [dump.rdb](dump.rdb)
 <!---->
 
 <!---->
-## [1. Using Process stdin](1-stdin.js)
+## [1. Node Redis Client](0-redis_client.js)
 ### :page_with_curl: Task requirements.
-Create a program named `1-stdin.js` that will be executed through command line:
+Install [node_redis](/rltoken/mRftfl67BrNvl-RM5JQfUA "node_redis") using npm
 
-* It should display the message `Welcome to Holberton School, what is your name?` (followed by a new line)
-* The user should be able to input their name on a new line
-* The program should display `Your name is: INPUT`
-* When the user ends the program, it should display `This important software is now closing` (followed by a new line)
+Using Babel and ES6, write a script named `0-redis_client.js`. It should connect to the Redis server running on your machine:
+
+* It should log to the console the message `Redis client connected to the server` when the connection to Redis works correctly
+* It should log to the console the message `Redis client not connected to the server: ERROR_MESSAGE` when the connection to Redis does not work
 
 **Requirements:**
 
-* Your code will be tested through a child process, make sure you have everything you need for that
+* To import the library, you need to use the keyword `import`
 ```
-    bob@dylan:~$ node 1-stdin.js 
-    Welcome to Holberton School, what is your name?
-    Bob
-    Your name is: Bob
+    bob@dylan:~$ ps ax | grep redis-server
+     2070 pts/1    S+     0:00 grep --color=auto redis-server
     bob@dylan:~$ 
-    bob@dylan:~$ echo "John" | node 1-stdin.js 
-    Welcome to Holberton School, what is your name?
-    Your name is: John
-    This important software is now closing
+    bob@dylan:~$ npm run dev 0-redis_client.js 
+    
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "0-redis_client.js"
+    
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 0-redis_client.js`
+    Redis client not connected to the server: Error: Redis connection to 127.0.0.1:6379 failed - connect ECONNREFUSED 127.0.0.1:6379
+    Redis client not connected to the server: Error: Redis connection to 127.0.0.1:6379 failed - connect ECONNREFUSED 127.0.0.1:6379
+    Redis client not connected to the server: Error: Redis connection to 127.0.0.1:6379 failed - connect ECONNREFUSED 127.0.0.1:6379
+    ^C
     bob@dylan:~$ 
+    bob@dylan:~$ ./src/redis-server > /dev/null 2>&1 &
+    [1] 2073
+    bob@dylan:~$ ps ax | grep redis-server
+     2073 pts/0    Sl     0:00 ./src/redis-server *:6379
+     2078 pts/1    S+     0:00 grep --color=auto redis-server
+    bob@dylan:~$
+    bob@dylan:~$ npm run dev 0-redis_client.js 
+    
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "0-redis_client.js"
+    
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 0-redis_client.js`
+    Redis client connected to the server
+    ^C
+    bob@dylan:~$
 ```
 
 **Repo:**
 
-* GitHub repository: `alx-backend-javascript`
-* Directory: `0x05-Node_JS_basic`
-* File: `1-stdin.js`
+* GitHub repository: `alx-backend`
+* Directory: `0x03-queuing_system_in_js`
+* File: `0-redis_client.js`
+
 
 ### :wrench: Task setup.
 ```bash
 # Create solution file.
-touch 1-stdin.js
-chmod +x 1-stdin.js
+touch 0-redis_client.js
+chmod +x 0-redis_client.js
 
 # Lint.
-npm run lint 1-stdin.js --fix
+npm run lint 0-redis_client.js --fix
 
 # Test.
-node 1-stdin.js
-echo "John" | node 1-stdin.js 
+npm run dev 0-redis_client.js
 ```
 
 ### :heavy_check_mark: Solution
-> [:point_right: 1-stdin.js](1-stdin.js)
+> [:point_right: 0-redis_client.js](0-redis_client.js)
 <!---->
 
-## [2. Reading a file synchronously with Node JS](2-read_file.js)
+## [2. Node Redis client and basic operations](1-redis_op.js)
 ### :page_with_curl: Task requirements.
-Using the database `database.csv` (provided in project description), create a function `countStudents` in the file `2-read_file.js`
+In a file `1-redis_op.js`, copy the code you previously wrote (`0-redis_client.js`).
 
-* Create a function named `countStudents`. It should accept a path in argument
-* The script should attempt to read the database file synchronously
-* If the database is not available, it should throw an error with the text `Cannot load the database`
-* If the database is available, it should log the following message to the console `Number of students: NUMBER_OF_STUDENTS`
-* It should log the number of students in each field, and the list with the following format: `Number of students in FIELD: 6. List: LIST_OF_FIRSTNAMES`
-* CSV file can contain empty lines (at the end) - and they are not a valid student!
+Add two functions:
+
+* `setNewSchool`:
+    * It accepts two arguments `schoolName`, and `value`.
+    * It should set in Redis the value for the key `schoolName`
+    * It should display a confirmation message using `redis.print`
+* `displaySchoolValue`:
+    * It accepts one argument `schoolName`.
+    * It should log to the console the value for the key passed as argument
+
+At the end of the file, call:
+
+* `displaySchoolValue('Holberton');`
+* `setNewSchool('HolbertonSanFrancisco', '100');`
+* `displaySchoolValue('HolbertonSanFrancisco');`
+
+**Requirements:**
+
+* Use callbacks for any of the operation, we will look at async operations later
 ```
-    bob@dylan:~$ cat 2-main_0.js
-    const countStudents = require('./2-read_file');
+    bob@dylan:~$ npm run dev 1-redis_op.js 
     
-    countStudents("nope.csv");
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "1-redis_op.js"
     
-    bob@dylan:~$ node 2-main_0.js
-    2-read_file.js:9
-        throw new Error('Cannot load the database');
-        ^
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 1-redis_op.js`
+    Redis client connected to the server
+    School
+    Reply: OK
+    100
+    ^C
     
-    Error: Cannot load the database
-    ...
     bob@dylan:~$
-    bob@dylan:~$ cat 2-main_1.js
-    const countStudents = require('./2-read_file');
-    
-    countStudents("database.csv");
-    
-    bob@dylan:~$ node 2-main_1.js
-    Number of students: 10
-    Number of students in CS: 6. List: Johann, Arielle, Jonathan, Emmanuel, Guillaume, Katie
-    Number of students in SWE: 4. List: Guillaume, Joseph, Paul, Tommy
-    bob@dylan:~$ 
 ```
 
 **Repo:**
 
-* GitHub repository: `alx-backend-javascript`
-* Directory: `0x05-Node_JS_basic`
-* File: `2-read_file.js`
+* GitHub repository: `alx-backend`
+* Directory: `0x03-queuing_system_in_js`
+* File: `1-redis_op.js`
 
 
 ### :wrench: Task setup.
 ```bash
 # Create solution file.
-touch 0-console.js
-chmod +x 0-console.js
+touch 1-redis_op.js
+chmod +x 1-redis_op.js
 
 # Lint.
-npm run lint 0-console.js --fix
+npm run lint 1-redis_op.js --fix
 
 # Test.
-touch tests/2-main_0.js tests/2-main_1.js
-chmod +x tests/2-main_0.js tests/2-main_1.js
-node tests/2-main_0.js
-node tests/2-main_1.js
+npm run dev 1-redis_op.js
 ```
 
 ### :heavy_check_mark: Solution
-> [:point_right: 2-read_file.js](2-read_file.js)
+> [:point_right: 1-redis_op.js](1-redis_op.js)
 
 
-## [3. User ID for Session ID](api/v1/auth/session_auth.py)
+## [3. Node Redis client and async operations](2-redis_op_async.js)
 ### :page_with_curl: Task requirements.
-Score: 0.0% (Checks completed: 0.0%)
+In a file `1-redis_op.js`, copy the code you previously wrote (`0-redis_client.js`).
 
-Update `SessionAuth` class:
+Add two functions:
 
-Create an instance method `def user_id_for_session_id(self, session_id: str = None) -> str:` that returns a `User` ID based on a Session ID:
+* `setNewSchool`:
+    * It accepts two arguments `schoolName`, and `value`.
+    * It should set in Redis the value for the key `schoolName`
+    * It should display a confirmation message using `redis.print`
+* `displaySchoolValue`:
+    * It accepts one argument `schoolName`.
+    * It should log to the console the value for the key passed as argument
 
-* Return `None` if `session_id` is `None`
-* Return `None` if `session_id` is not a string
-* Return the value (the User ID) for the key `session_id` in the dictionary `user_id_by_session_id`.
-* You must use `.get()` built-in for accessing in a dictionary a value based on key
+At the end of the file, call:
 
-Now you have 2 methods (`create_session` and `user_id_for_session_id`) for storing and retrieving a link between a `User` ID and a Session ID.
+* `displaySchoolValue('Holberton');`
+* `setNewSchool('HolbertonSanFrancisco', '100');`
+* `displaySchoolValue('HolbertonSanFrancisco');`
+
+**Requirements:**
+
+* Use callbacks for any of the operation, we will look at async operations later
 ```
-    bob@dylan:~$ cat main_2.py 
-    #!/usr/bin/env python3
-    """ Main 2
-    """
-    from api.v1.auth.session_auth import SessionAuth
+    bob@dylan:~$ npm run dev 1-redis_op.js 
     
-    sa = SessionAuth()
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "1-redis_op.js"
     
-    user_id_1 = "abcde"
-    session_1 = sa.create_session(user_id_1)
-    print("{} => {}: {}".format(user_id_1, session_1, sa.user_id_by_session_id))
-    
-    user_id_2 = "fghij"
-    session_2 = sa.create_session(user_id_2)
-    print("{} => {}: {}".format(user_id_2, session_2, sa.user_id_by_session_id))
-    
-    print("---")
-    
-    tmp_session_id = None
-    tmp_user_id = sa.user_id_for_session_id(tmp_session_id)
-    print("{} => {}".format(tmp_session_id, tmp_user_id))
-    
-    tmp_session_id = 89
-    tmp_user_id = sa.user_id_for_session_id(tmp_session_id)
-    print("{} => {}".format(tmp_session_id, tmp_user_id))
-    
-    tmp_session_id = "doesntexist"
-    tmp_user_id = sa.user_id_for_session_id(tmp_session_id)
-    print("{} => {}".format(tmp_session_id, tmp_user_id))
-    
-    print("---")
-    
-    tmp_session_id = session_1
-    tmp_user_id = sa.user_id_for_session_id(tmp_session_id)
-    print("{} => {}".format(tmp_session_id, tmp_user_id))
-    
-    tmp_session_id = session_2
-    tmp_user_id = sa.user_id_for_session_id(tmp_session_id)
-    print("{} => {}".format(tmp_session_id, tmp_user_id))
-    
-    print("---")
-    
-    session_1_bis = sa.create_session(user_id_1)
-    print("{} => {}: {}".format(user_id_1, session_1_bis, sa.user_id_by_session_id))
-    
-    tmp_user_id = sa.user_id_for_session_id(session_1_bis)
-    print("{} => {}".format(session_1_bis, tmp_user_id))
-    
-    tmp_user_id = sa.user_id_for_session_id(session_1)
-    print("{} => {}".format(session_1, tmp_user_id))
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 1-redis_op.js`
+    Redis client connected to the server
+    School
+    Reply: OK
+    100
+    ^C
     
     bob@dylan:~$
-    bob@dylan:~$ API_HOST=0.0.0.0 API_PORT=5000 AUTH_TYPE=session_auth ./main_2.py 
-    abcde => 8647f981-f503-4638-af23-7bb4a9e4b53f: {'8647f981-f503-4638-af23-7bb4a9e4b53f': 'abcde'}
-    fghij => a159ee3f-214e-4e91-9546-ca3ce873e975: {'a159ee3f-214e-4e91-9546-ca3ce873e975': 'fghij', '8647f981-f503-4638-af23-7bb4a9e4b53f': 'abcde'}
-    ---
-    None => None
-    89 => None
-    doesntexist => None
-    ---
-    8647f981-f503-4638-af23-7bb4a9e4b53f => abcde
-    a159ee3f-214e-4e91-9546-ca3ce873e975 => fghij
-    ---
-    abcde => 5d2930ba-f6d6-4a23-83d2-4f0abc8b8eee: {'a159ee3f-214e-4e91-9546-ca3ce873e975': 'fghij', '8647f981-f503-4638-af23-7bb4a9e4b53f': 'abcde', '5d2930ba-f6d6-4a23-83d2-4f0abc8b8eee': 'abcde'}
-    5d2930ba-f6d6-4a23-83d2-4f0abc8b8eee => abcde
-    8647f981-f503-4638-af23-7bb4a9e4b53f => abcde
-    bob@dylan:~$
 ```
+
+**Repo:**
+
+* GitHub repository: `alx-backend`
+* Directory: `0x03-queuing_system_in_js`
+* File: `1-redis_op.js`
 
 ### :wrench: Task setup.
 ```bash
+# Create solution file.
+touch 2-redis_op_async.js
+chmod +x 2-redis_op_async.js
+
+# Lint.
+npm run lint 2-redis_op_async.js --fix
+
+# Test.
+npm run dev 2-redis_op_async.js
 ```
 
 ### :heavy_check_mark: Solution
-> [:point_right: api/v1/auth/session_auth.py](api/v1/auth/session_auth.py
+> [:point_right: 2-redis_op_async.js](2-redis_op_async.js)
 
 
-## [4. Session cookie](api/v1/auth/auth.py)
+## [4. Node Redis client and advanced operations](4-redis_advanced_op.js)
 ### :page_with_curl: Task requirements.
-Score: 0.0% (Checks completed: 0.0%)
+In a file named `4-redis_advanced_op.js`, let’s use the client to store a hash value
 
-Update `api/v1/auth/auth.py` by adding the method `def session_cookie(self, request=None):` that returns a cookie value from a request:
+#### Create Hash:
 
-* Return `None` if `request` is `None`
-* Return the value of the cookie named `_my_session_id` from `request` \- the name of the cookie must be defined by the environment variable `SESSION_NAME`
-* You must use `.get()` built-in for accessing the cookie in the request cookies dictionary
-* You must use the environment variable `SESSION_NAME` to define the name of the cookie used for the Session ID
+Using `hset`, let’s store the following:
 
-In the first terminal:
+* The key of the hash should be `HolbertonSchools`
+* It should have a value for:
+    * `Portland=50`
+    * `Seattle=80`
+    * `New York=20`
+    * `Bogota=20`
+    * `Cali=40`
+    * `Paris=2`
+* Make sure you use `redis.print` for each `hset`
+
+#### Display Hash:
+
+Using `hgetall`, display the object stored in Redis. It should return the following:
+
+**Requirements:**
+
+* Use callbacks for any of the operation, we will look at async operations later
 ```
-    bob@dylan:~$ cat main_3.py
-    #!/usr/bin/env python3
-    """ Cookie server
-    """
-    from flask import Flask, request
-    from api.v1.auth.auth import Auth
+    bob@dylan:~$ npm run dev 4-redis_advanced_op.js 
     
-    auth = Auth()
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "4-redis_advanced_op.js"
     
-    app = Flask(__name__)
-    
-    @app.route('/', methods=['GET'], strict_slashes=False)
-    def root_path():
-        """ Root path
-        """
-        return "Cookie value: {}\n".format(auth.session_cookie(request))
-    
-    if __name__ == "__main__":
-        app.run(host="0.0.0.0", port="5000")
-    
-    bob@dylan:~$ API_HOST=0.0.0.0 API_PORT=5000 AUTH_TYPE=session_auth SESSION_NAME=_my_session_id ./main_3.py 
-     * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
-    ....
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 4-redis_advanced_op.js`
+    Redis client connected to the server
+    Reply: 1
+    Reply: 1
+    Reply: 1
+    Reply: 1
+    Reply: 1
+    Reply: 1
+    {
+      Portland: '50',
+      Seattle: '80',
+      'New York': '20',
+      Bogota: '20',
+      Cali: '40',
+      Paris: '2'
+    }
+    ^C
+    bob@dylan:~$
 ```
 
-In a second terminal:
-```
-    bob@dylan:~$ curl "http://0.0.0.0:5000"
-    Cookie value: None
-    bob@dylan:~$
-    bob@dylan:~$ curl "http://0.0.0.0:5000" --cookie "_my_session_id=Hello"
-    Cookie value: Hello
-    bob@dylan:~$
-    bob@dylan:~$ curl "http://0.0.0.0:5000" --cookie "_my_session_id=C is fun"
-    Cookie value: C is fun
-    bob@dylan:~$
-    bob@dylan:~$ curl "http://0.0.0.0:5000" --cookie "_my_session_id_fake"
-    Cookie value: None
-    bob@dylan:~$
-```
+**Repo:**
+
+* GitHub repository: `alx-backend`
+* Directory: `0x03-queuing_system_in_js`
+* File: `4-redis_advanced_op.js`
+
 
 ### :wrench: Task setup.
 ```bash
+# Create solution file.
+touch 4-redis_advanced_op.js
+chmod +x 4-redis_advanced_op.js
+
+# Lint.
+npm run lint 4-redis_advanced_op.js --fix
+
+# Test.
+npm run dev 4-redis_advanced_op.js
 ```
 
 ### :heavy_check_mark: Solution
 > [:point_right: api/v1/auth/auth.py](api/v1/app.py)
 
-## [5. Before request](api/v1/app.py)
+## [5. Node Redis client publisher and subscriber](5-subscriber.js)
 ### :page_with_curl: Task requirements.
-Score: 0.0% (Checks completed: 0.0%)
+In a file named `5-subscriber.js`, create a redis client:
 
-Update the `@app.before_request` method in `api/v1/app.py`:
+* On connect, it should log the message `Redis client connected to the server`
+* On error, it should log the message `Redis client not connected to the server: ERROR MESSAGE`
+* It should subscribe to the channel `holberton school channel`
+* When it receives message on the channel `holberton school channel`, it should log the message to the console
+* When the message is `KILL_SERVER`, it should unsubscribe and quit
 
-* Add the URL path `/api/v1/auth_session/login/` in the list of excluded paths of the method `require_auth` \- this route doesn’t exist yet but it should be accessible outside authentication
-* If `auth.authorization_header(request)` and `auth.session_cookie(request)` return `None`, `abort(401)`
+In a file named `5-publisher.js`, create a redis client:
 
-In the first terminal:
+* On connect, it should log the message `Redis client connected to the server`
+* On error, it should log the message `Redis client not connected to the server: ERROR MESSAGE`
+* Write a function named `publishMessage`:
+    * It will take two arguments: `message` (string), and `time` (integer - in ms)
+    * After `time` millisecond:
+        * The function should log to the console `About to send MESSAGE`
+        * The function should publish to the channel `holberton school channel`, the message passed in argument after the time passed in arguments
+* At the end of the file, call:
 ```
-    bob@dylan:~$ API_HOST=0.0.0.0 API_PORT=5000 AUTH_TYPE=session_auth SESSION_NAME=_my_session_id python3 -m api.v1.app
-     * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
-    ....
+    publishMessage("Holberton Student #1 starts course", 100);
+    publishMessage("Holberton Student #2 starts course", 200);
+    publishMessage("KILL_SERVER", 300);
+    publishMessage("Holberton Student #3 starts course", 400);
 ```
 
-In a second terminal:
+**Requirements:**
+
+* You only need one Redis server to execute the program
+* You will need to have two node processes to run each script at the same time
+
+**Terminal 1:**
 ```
-    bob@dylan:~$ curl "http://0.0.0.0:5000/api/v1/status"
-    {
-      "status": "OK"
-    }
-    bob@dylan:~$
-    bob@dylan:~$ curl "http://0.0.0.0:5000/api/v1/auth_session/login" # not found but not "blocked" by an authentication system
-    {
-      "error": "Not found"
-    }
-    bob@dylan:~$
-    bob@dylan:~$ curl "http://0.0.0.0:5000/api/v1/users/me"
-    {
-      "error": "Unauthorized"
-    }
-    bob@dylan:~$ curl "http://0.0.0.0:5000/api/v1/users/me" -H "Authorization: Basic Ym9iQGhidG4uaW86SDBsYmVydG9uU2Nob29sOTgh" # Won't work because the environment variable AUTH_TYPE is equal to "session_auth"
-    {
-      "error": "Forbidden"
-    }
-    bob@dylan:~$
-    bob@dylan:~$ curl "http://0.0.0.0:5000/api/v1/users/me" --cookie "_my_session_id=5535d4d7-3d77-4d06-8281-495dc3acfe76" # Won't work because no user is linked to this Session ID
-    {
-      "error": "Forbidden"
-    }
-    bob@dylan:~$
+    bob@dylan:~$ npm run dev 5-subscriber.js 
+    
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "5-subscriber.js"
+    
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 5-subscriber.js`
+    Redis client connected to the server
 ```
+**Terminal 2:**
+```
+    bob@dylan:~$ npm run dev 5-publisher.js 
+    
+    > queuing_system_in_js@1.0.0 dev /root
+    > nodemon --exec babel-node --presets @babel/preset-env "5-publisher.js"
+    
+    [nodemon] 2.0.4
+    [nodemon] to restart at any time, enter `rs`
+    [nodemon] watching path(s): *.*
+    [nodemon] watching extensions: js,mjs,json
+    [nodemon] starting `babel-node --presets @babel/preset-env 5-publisher.js`
+    Redis client connected to the server
+    About to send Holberton Student #1 starts course
+    About to send Holberton Student #2 starts course
+    About to send KILL_SERVER
+    About to send Holberton Student #3 starts course
+    ^C
+    bob@dylan:~$ 
+```
+
+**And in the same time in Terminal 1:**
+```
+    Redis client connected to the server
+    Holberton Student #1 starts course
+    Holberton Student #2 starts course
+    KILL_SERVER
+    [nodemon] clean exit - waiting for changes before restart
+    ^C
+    bob@dylan:~$ 
+```
+
+Now you have a basic Redis-based queuing system where you have a process to generate job and a second one to process it. These 2 processes can be in 2 different servers, which we also call “background workers”.
+
+**Repo:**
+
+* GitHub repository: `alx-backend`
+* Directory: `0x03-queuing_system_in_js`
+* File: `5-subscriber.js, 5-publisher.js`
+
 ### :wrench: Task setup.
 ```bash
+# Create solution file.
+touch 5-subscriber.js 5-publisher.js
+chmod +x 5-subscriber.js 5-publisher.js
+
+# Lint.
+npm run lint 5-subscriber.js
+npm run lint 5-publisher.js
+
+# Test.
+npm run dev 5-subscriber.js
+npm run dev 5-publisher.js 
 ```
 
 ### :heavy_check_mark: Solution
-> [:point_right: api/v1/app.py](api/v1/app.py)
+> [:point_right: 5-subscriber.js](5-subscriber.js), [:point_right: 5-publisher.js](5-publisher.js)
 
 <!---->
 ## [6. Use Session ID for identifying a User](api/v1/app.py)
